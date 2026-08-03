@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: `${APP_NAME} - ${APP_DESC_EN}`,
+  title: `${APP_NAME} - ${APP_DESC_CN}`,
   description: APP_DESC_CN,
   manifest: "/manifest.webmanifest",
   appleWebApp: {
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
         media: "(prefers-color-scheme: dark)",
       },
       {
-        url: "/favicon.svg",
+        url: "https://sc.l.cd/f/Leo_1785724069270_kwk3_leocloud.svg",
         type: "image/svg+xml",
       },
     ],
