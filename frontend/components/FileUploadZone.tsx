@@ -305,8 +305,8 @@ export function FileUploadZone() {
           )}
         >
           {isDragging
-            ? "Drop files to upload"
-            : "Drag & drop files here, or click to browse"}
+            ? "松开即可上传"
+            : "拖拽文件到此处，或点击选择文件"}
         </p>
 
         <input
