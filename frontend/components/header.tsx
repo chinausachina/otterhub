@@ -11,8 +11,14 @@ import { ImageLoadModeToggle } from "./ImageLoadModeToggle";
 import { SafeModeToggle } from "./SafeModeToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { Input } from "./ui/input";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
-import { APP_NAME, APP_CATEGORY } from "@/lib/ui-text";
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "./ui/sheet";
+import { APP_NAME, APP_CATEGORY, APP_LOGO_PNG } from "@/lib/ui-text";
 
 export function Header() {
   const { searchQuery, setSearchQuery } = useFileQueryStore();
@@ -46,40 +52,92 @@ export function Header() {
                   </Button>
                 )}
               </div>
-              <Button variant="ghost" onClick={() => { setShowMobileSearch(false); setSearchQuery(""); }} className="text-base font-semibold text-primary">取消</Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowMobileSearch(false);
+                  setSearchQuery("");
+                }}
+                className="text-base font-semibold text-primary"
+              >
+                取消
+              </Button>
             </div>
           ) : (
             <div className="flex w-full items-center justify-between animate-in fade-in duration-300">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-primary to-accent text-xl shadow-lg shadow-primary/20">🦦</div>
-                <span className="text-lg font-bold tracking-tight text-foreground">{APP_NAME}</span>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden shadow-lg shadow-primary/20">
+                  <img src={APP_LOGO_PNG} alt={APP_NAME} className="h-full w-full object-cover" />
+                </div>
+                <span className="text-lg font-bold tracking-tight text-foreground">
+                  {APP_NAME}
+                </span>
               </div>
               <div className="flex items-center gap-1">
                 <FileTypeDropdown />
-                <Button variant="ghost" size="icon" onClick={() => setShowMobileSearch(true)} className="h-10 w-10 text-foreground/70 rounded-xl"><Search className="h-5 w-5" /></Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowMobileSearch(true)}
+                  className="h-10 w-10 text-foreground/70 rounded-xl"
+                >
+                  <Search className="h-5 w-5" />
+                </Button>
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-10 w-10 text-foreground/70 rounded-xl"><Settings2 className="h-5 w-5" /></Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 text-foreground/70 rounded-xl"
+                    >
+                      <Settings2 className="h-5 w-5" />
+                    </Button>
                   </SheetTrigger>
-                  <SheetContent side="bottom" className="rounded-t-[2.5rem] border-glass-border bg-popover/95 backdrop-blur-2xl pb-12 px-8">
+                  <SheetContent
+                    side="bottom"
+                    className="rounded-t-[2.5rem] border-glass-border bg-popover/95 backdrop-blur-2xl pb-12 px-8"
+                  >
                     <SheetHeader className="mb-2 pt-2">
                       <div className="mx-auto w-12 h-1.5 rounded-full bg-foreground/10 mb-6" />
                       <SheetTitle className="text-xl font-bold text-foreground flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary/10"><Settings2 className="h-5 w-5 text-primary" /></div>
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          <Settings2 className="h-5 w-5 text-primary" />
+                        </div>
                         偏好设置
                       </SheetTitle>
                     </SheetHeader>
                     <div className="space-y-8">
                       <div className="flex items-center justify-between">
-                        <div className="space-y-1"><p className="text-base font-semibold text-foreground">安全模式</p><p className="text-xs text-foreground/50">遮罩敏感内容 (NSFW)</p></div>
+                        <div className="space-y-1">
+                          <p className="text-base font-semibold text-foreground">
+                            安全模式
+                          </p>
+                          <p className="text-xs text-foreground/50">
+                            遮罩敏感内容 (NSFW)
+                          </p>
+                        </div>
                         <SafeModeToggle />
                       </div>
                       <div className="flex items-center justify-between">
-                        <div className="space-y-1"><p className="text-base font-semibold text-foreground">图片加载</p><p className="text-xs text-foreground/50">根据网络自动调整质量</p></div>
+                        <div className="space-y-1">
+                          <p className="text-base font-semibold text-foreground">
+                            图片加载
+                          </p>
+                          <p className="text-xs text-foreground/50">
+                            根据网络自动调整质量
+                          </p>
+                        </div>
                         <ImageLoadModeToggle />
                       </div>
                       <div className="flex items-center justify-between">
-                        <div className="space-y-1"><p className="text-base font-semibold text-foreground">深色模式</p><p className="text-xs text-foreground/50">随系统自动切换主题</p></div>
+                        <div className="space-y-1">
+                          <p className="text-base font-semibold text-foreground">
+                            深色模式
+                          </p>
+                          <p className="text-xs text-foreground/50">
+                            随系统自动切换主题
+                          </p>
+                        </div>
                         <ThemeToggle />
                       </div>
                     </div>
@@ -96,13 +154,23 @@ export function Header() {
   // 桌面端头部导航栏
   return (
     <header className="sticky top-0 z-40 w-full border-b border-glass-border bg-glass-bg/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+      <div className="flex h-20 items-center justify-between px-6 md:px-8">
         {/* Left: Logo */}
-        <div className="flex items-center gap-4 group cursor-pointer shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-accent text-2xl shadow-xl shadow-primary/20 transition-transform group-hover:scale-110">🦦</div>
+        <div
+          className="flex items-center gap-4 group cursor-pointer shrink-0"
+          title="返回顶部"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl overflow-hidden shadow-xl shadow-primary/20 transition-transform group-hover:scale-110">
+            <img src={APP_LOGO_PNG} alt={APP_NAME} className="h-full w-full object-cover" />
+          </div>
           <div className="hidden lg:block">
-            <h1 className="text-xl font-black tracking-tighter text-foreground leading-none">{APP_NAME}</h1>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/60 mt-1">{APP_CATEGORY}</p>
+            <h1 className="text-xl font-black tracking-tighter text-foreground leading-none">
+              {APP_NAME}
+            </h1>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/60 mt-1">
+              {APP_CATEGORY}
+            </p>
           </div>
         </div>
 
@@ -122,7 +190,14 @@ export function Header() {
               className="h-10 w-64 rounded-xl border-glass-border bg-secondary/20 pl-10 pr-10 text-sm focus-visible:ring-primary/40 placeholder:text-foreground/80"
             />
             {searchQuery && (
-              <Button variant="ghost" size="icon" onClick={() => setSearchQuery("")} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-foreground/30 hover:text-foreground"><X className="h-4 w-4" /></Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-foreground/30 hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             )}
           </div>
           <div className="flex items-center gap-1.5 rounded-2xl bg-secondary/10 p-1.5 border border-glass-border">
