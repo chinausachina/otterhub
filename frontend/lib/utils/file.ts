@@ -1,8 +1,5 @@
 import { FileMetadata, FileType } from "@shared/types";
-import {
-  getFileTypeByMimeOrName,
-  getMimeTypeByExt,
-} from "@shared/utils/file";
+import { getFileTypeByMimeOrName, getMimeTypeByExt } from "@shared/utils/file";
 import { DIRECT_DOWNLOAD_LIMIT } from "../types";
 
 export type { FileCategory } from "@shared/utils/file";
@@ -44,7 +41,8 @@ export function compressImageFromUrl(
     img.onload = () => {
       const canvas = resizeImageToCanvas(img, size);
       canvas.toBlob(
-        (blob) => (blob ? resolve(blob) : reject(new Error("Canvas toBlob failed"))),
+        (blob) =>
+          blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")),
         "image/jpeg",
         quality
       );
@@ -104,7 +102,9 @@ function openFsCacheDB(): Promise<IDBDatabase> {
   });
 }
 
-async function saveDirectoryHandle(handle: FileSystemDirectoryHandle): Promise<void> {
+async function saveDirectoryHandle(
+  handle: FileSystemDirectoryHandle
+): Promise<void> {
   const db = await openFsCacheDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(FS_CACHE_STORE_NAME, "readwrite");
@@ -146,8 +146,12 @@ async function verifyPermission(
 ): Promise<boolean> {
   const options = readWrite ? { mode: "readwrite" as const } : {};
   const fsHandle = handle as unknown as {
-    queryPermission(options?: { mode?: "read" | "readwrite" }): Promise<PermissionState>;
-    requestPermission(options?: { mode?: "read" | "readwrite" }): Promise<PermissionState>;
+    queryPermission(options?: {
+      mode?: "read" | "readwrite";
+    }): Promise<PermissionState>;
+    requestPermission(options?: {
+      mode?: "read" | "readwrite";
+    }): Promise<PermissionState>;
   };
 
   if ((await fsHandle.queryPermission(options)) === "granted") {
@@ -223,10 +227,12 @@ async function streamToDirectory(
   dirHandle: FileSystemDirectoryHandle,
   url: string,
   fileName: string,
-  onProgress?: (downloaded: number, total: number) => void,
+  onProgress?: (downloaded: number, total: number) => void
 ): Promise<void> {
   const safeFileName = sanitizeFileName(fileName);
-  const fileHandle = await dirHandle.getFileHandle(safeFileName, { create: true });
+  const fileHandle = await dirHandle.getFileHandle(safeFileName, {
+    create: true,
+  });
   const writable = await fileHandle.createWritable();
 
   const response = await fetch(url, { credentials: "include" });
@@ -261,14 +267,23 @@ export interface DownloadProgress {
   downloaded: number;
   total: number;
   percentage: number;
+  dirName?: string;
+  method?: DownloadMethod;
 }
+
+export type DownloadMethod = "directory" | "save-picker" | "browser";
 
 export interface DownloadResult {
   status: "success" | "cancelled";
+  dirName?: string;
+  method?: DownloadMethod;
 }
 
 const CANCELLED_DOWNLOAD_RESULT: DownloadResult = { status: "cancelled" };
-const SUCCESS_DOWNLOAD_RESULT: DownloadResult = { status: "success" };
+const BROWSER_DOWNLOAD_RESULT: DownloadResult = {
+  status: "success",
+  method: "browser",
+};
 
 const isDownloadCancelledError = (error: unknown): boolean => {
   if (error instanceof DOMException) {
@@ -281,15 +296,15 @@ const isDownloadCancelledError = (error: unknown): boolean => {
 export const downloadFile = async (
   url: string,
   metadata: FileMetadata,
-  onProgress?: (progress: DownloadProgress) => void,
+  onProgress?: (progress: DownloadProgress) => void
 ): Promise<DownloadResult> => {
-  if (!url) return SUCCESS_DOWNLOAD_RESULT;
+  if (!url) return BROWSER_DOWNLOAD_RESULT;
 
   const { fileSize, fileName } = metadata;
 
   if (fileSize <= DIRECT_DOWNLOAD_LIMIT) {
     triggerAnchorDownload(url, fileName);
-    return SUCCESS_DOWNLOAD_RESULT;
+    return BROWSER_DOWNLOAD_RESULT;
   }
 
   if (supportsDirectoryPicker()) {
@@ -299,15 +314,26 @@ export const downloadFile = async (
         return CANCELLED_DOWNLOAD_RESULT;
       }
 
-      await streamToDirectory(result.handle, url, fileName, (downloaded, total) => {
-        onProgress?.({
-          downloaded,
-          total,
-          percentage: total > 0 ? Math.round((downloaded / total) * 100) : 0,
-        });
-      });
+      await streamToDirectory(
+        result.handle,
+        url,
+        fileName,
+        (downloaded, total) => {
+          onProgress?.({
+            downloaded,
+            total,
+            percentage: total > 0 ? Math.round((downloaded / total) * 100) : 0,
+            dirName: result.dirName,
+            method: "directory",
+          });
+        }
+      );
 
-      return SUCCESS_DOWNLOAD_RESULT;
+      return {
+        status: "success",
+        dirName: result.dirName,
+        method: "directory",
+      };
     } catch (error) {
       if (isDownloadCancelledError(error)) {
         return CANCELLED_DOWNLOAD_RESULT;
@@ -320,15 +346,19 @@ export const downloadFile = async (
     const ext = fileName.split(".").pop()?.toLowerCase() || "";
     const mimeType = ext ? getMimeTypeByExt(ext) : "";
     const acceptedMimeType =
-      mimeType && mimeType !== "application/octet-stream" ? mimeType : undefined;
+      mimeType && mimeType !== "application/octet-stream"
+        ? mimeType
+        : undefined;
     try {
       const handle = await window.showSaveFilePicker!({
         suggestedName: fileName,
         types: acceptedMimeType
-          ? [{
-              description: "File",
-              accept: { [acceptedMimeType]: [`.${ext}`] },
-            }]
+          ? [
+              {
+                description: "File",
+                accept: { [acceptedMimeType]: [`.${ext}`] },
+              },
+            ]
           : undefined,
       });
 
@@ -344,7 +374,7 @@ export const downloadFile = async (
 
       if (!onProgress || !total) {
         await response.body.pipeTo(writable);
-        return SUCCESS_DOWNLOAD_RESULT;
+        return { status: "success", method: "save-picker" };
       }
 
       const reader = response.body.getReader();
@@ -359,11 +389,12 @@ export const downloadFile = async (
           downloaded,
           total,
           percentage: total > 0 ? Math.round((downloaded / total) * 100) : 0,
+          method: "save-picker",
         });
       }
 
       await writable.close();
-      return SUCCESS_DOWNLOAD_RESULT;
+      return { status: "success", method: "save-picker" };
     } catch (error) {
       if (isDownloadCancelledError(error)) {
         return CANCELLED_DOWNLOAD_RESULT;
@@ -373,16 +404,24 @@ export const downloadFile = async (
   }
 
   triggerAnchorDownload(url, fileName);
-  return SUCCESS_DOWNLOAD_RESULT;
+  return BROWSER_DOWNLOAD_RESULT;
 };
 
 export interface BatchDownloadOptions {
   files: Array<{ key: string; metadata: FileMetadata }>;
   getUrl: (key: string) => string;
   concurrency?: number;
-  onProgress?: (fileIndex: number, fileName: string, progress: DownloadProgress) => void;
+  onProgress?: (
+    fileIndex: number,
+    fileName: string,
+    progress: DownloadProgress
+  ) => void;
   onFileStart?: (fileIndex: number, fileName: string) => void;
-  onFileComplete?: (fileIndex: number, fileName: string, success: boolean) => void;
+  onFileComplete?: (
+    fileIndex: number,
+    fileName: string,
+    success: boolean
+  ) => void;
   onDirectorySelected?: (dirName: string) => void;
   onDirectoryReused?: (dirName: string) => void;
 }
@@ -396,7 +435,7 @@ export interface BatchDownloadResult {
 const DEFAULT_CONCURRENCY = 3;
 const DELAY_BETWEEN_DOWNLOADS = 100;
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function sanitizeFileName(name: string): string {
   return name
@@ -409,9 +448,15 @@ async function downloadFilesToDirectory(
   files: Array<{ key: string; metadata: FileMetadata }>,
   getUrl: (key: string) => string,
   options: BatchDownloadOptions,
-  dirHandleResult: DirectoryHandleResult,
+  dirHandleResult: DirectoryHandleResult
 ): Promise<BatchDownloadResult> {
-  const { onProgress, onFileStart, onFileComplete, onDirectorySelected, onDirectoryReused } = options;
+  const {
+    onProgress,
+    onFileStart,
+    onFileComplete,
+    onDirectorySelected,
+    onDirectoryReused,
+  } = options;
   const result: BatchDownloadResult = { success: 0, failed: 0, cancelled: 0 };
 
   const { handle: dirHandle, reused, dirName } = dirHandleResult;
@@ -456,9 +501,14 @@ async function downloadFilesToDirectory(
 async function downloadFilesWithAnchor(
   files: Array<{ key: string; metadata: FileMetadata }>,
   getUrl: (key: string) => string,
-  options: BatchDownloadOptions,
+  options: BatchDownloadOptions
 ): Promise<BatchDownloadResult> {
-  const { concurrency = DEFAULT_CONCURRENCY, onProgress, onFileStart, onFileComplete } = options;
+  const {
+    concurrency = DEFAULT_CONCURRENCY,
+    onProgress,
+    onFileStart,
+    onFileComplete,
+  } = options;
   const result: BatchDownloadResult = { success: 0, failed: 0, cancelled: 0 };
 
   for (let i = 0; i < files.length; i += concurrency) {
@@ -474,9 +524,13 @@ async function downloadFilesWithAnchor(
 
         try {
           const url = getUrl(key);
-          const downloadResult = await downloadFile(url, metadata, (progress) => {
-            onProgress?.(fileIndex, fileName, progress);
-          });
+          const downloadResult = await downloadFile(
+            url,
+            metadata,
+            (progress) => {
+              onProgress?.(fileIndex, fileName, progress);
+            }
+          );
 
           const success = downloadResult.status === "success";
           onFileComplete?.(fileIndex, fileName, success);
@@ -523,17 +577,22 @@ export async function downloadFiles(
 
   if (supportsDirectoryPicker()) {
     // Check if dirHandleResult is provided
-    if ('dirHandleResult' in options) {
-      return downloadFilesToDirectory(files, getUrl, options, options.dirHandleResult);
+    if ("dirHandleResult" in options) {
+      return downloadFilesToDirectory(
+        files,
+        getUrl,
+        options,
+        options.dirHandleResult
+      );
     }
-    
+
     // Try to get cached directory
     const cachedResult = await getOrPickDirectory();
     if (!cachedResult) {
       // No cached directory, caller should show guide
-      throw new Error('NO_DIRECTORY_HANDLE');
+      throw new Error("NO_DIRECTORY_HANDLE");
     }
-    
+
     return downloadFilesToDirectory(files, getUrl, options, cachedResult);
   }
 
