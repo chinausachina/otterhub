@@ -62,6 +62,7 @@ export const useFileDataStore = create<FileDataState>()(
         [FileType.Audio]: emptyBucket(),
         [FileType.Video]: emptyBucket(),
         [FileType.Document]: emptyBucket(),
+        [FileType.Text]: emptyBucket(),
         [FileType.Trash]: emptyBucket(),
       },
 
