@@ -117,6 +117,15 @@ export function getFileTypeByMimeOrExt(
   if (contentType.startsWith("audio/")) return FileType.Audio;
   if (contentType.startsWith("video/")) return FileType.Video;
 
+  // 纯文本 / 代码类归入 Text，便于「文本」分类
+  if (
+    normalizedMimeType.startsWith("text/") ||
+    contentType.startsWith("text/") ||
+    ["txt", "md", "json", "csv", "log", "yml", "yaml"].includes(ext.toLowerCase())
+  ) {
+    return FileType.Text;
+  }
+
   return FileType.Document;
 }
 
@@ -134,6 +143,7 @@ export function getFileTypeByMimeOrName(
   if (category === "image") return FileType.Image;
   if (category === "audio") return FileType.Audio;
   if (category === "video") return FileType.Video;
+  if (category === "text") return FileType.Text;
 
   return FileType.Document;
 }
