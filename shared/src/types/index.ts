@@ -11,6 +11,7 @@ export interface GeneralSettings {
   nsfwDetection: boolean;
   imageLoadMode: ImageLoadMode;
   defaultUploadTags: FileTag[]; // 默认上传标签
+  enableImageAnalysis: boolean; // 是否启用上传时自动 AI 图片分析
 }
 
 
@@ -20,6 +21,7 @@ export enum FileType {
   Audio = 'audio',
   Video = 'video',
   Document = 'doc',
+  Text = 'text',
   Trash = 'trash',
 }
 
